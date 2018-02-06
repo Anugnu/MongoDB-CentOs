@@ -70,6 +70,8 @@ Other Useful things:
 - use user-details for "user-details as a database.
  Just to give read/write role to a new user to multiple databases at a time
 - db.createUser({user: "read-user", pwd: "password", roles:[{role: "read", db: "db_name"}, {role:"readWrite", db: "db_name"}]})
- 
-Thanks
+
+Hope this was helpful.
+
+Thanks and Regards
 Anugnu veeravathni
