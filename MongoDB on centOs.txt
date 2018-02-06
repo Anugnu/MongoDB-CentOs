@@ -10,6 +10,7 @@ $ is not in root
 2)copy below details in vi editor.
 right click on screen to copy, make sure you copied it correctly.
 This is path for required repository.
+press ESC button and then "i" for insert data. 
 
 [MongoDB]
 name=MongoDB Repository
@@ -17,7 +18,7 @@ baseurl=http://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.4/x86_64/
 gpgcheck=0
 enabled=1
 
-3)Now press ESC and the ":", then "wq!" to copy and quit from editor.
+3)Now press ESC button and then ":", then "wq!" to copy and quit from editor.
 
 3)Before we move on, we should verify that the MongoDB repository exists within the yum utility.
 The repolist command displays a list of enabled repositories:
@@ -30,8 +31,6 @@ dnf install mongodb
 
 5)you can start mongodb directly (use sudo if its not root)
 - systemctl start mongod
-or by Restarting the machine to start the mongodb server(recommended).
-- /etc/init.d/mongod restart
 Incase you want mongodb to autostart on system boot
 - chkconfig mongod on
 
