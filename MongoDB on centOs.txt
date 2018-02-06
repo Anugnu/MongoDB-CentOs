@@ -1,0 +1,55 @@
+Only on CentOs and RedHat
+
+Note: Type commands from Root or use "Sudo" infront of most commands.
+$ is not in root
+# is in root
+
+1)Open VI editor
+- vi /etc/yum.repos.d/mongodb.repo (use sudo if its not root)
+
+2)copy below details in vi editor.
+right click on screen to copy, make sure you copied it correctly.
+This is path for required repository.
+
+[MongoDB]
+name=MongoDB Repository
+baseurl=http://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.4/x86_64/
+gpgcheck=0
+enabled=1
+
+3)Now press ESC and the ":", then "wq!" to copy and quit from editor.
+
+3)Before we move on, we should verify that the MongoDB repository exists within the yum utility.
+The repolist command displays a list of enabled repositories:
+- yum repolist (use sudo if its not root)
+
+4)Now install MongoDB server into system.(use sudo if its not root)
+- yum install mongodb-org
+incase if you are using fedora
+dnf install mongodb
+
+5)you can start mongodb directly (use sudo if its not root)
+- systemctl start mongod
+or by Restarting the machine to start the mongodb server(recommended).
+- /etc/init.d/mongod restart
+Incase you want mongodb to autostart on system boot
+- chkconfig mongod on
+
+6)Check the installation sucesseded:(use sudo if its not root)
+- tail /var/log/mongodb/mongod.log
+
+6)check the version(use sudo if its not root)
+- mongod --version
+
+7)connect the mongodb commandline
+- mongo
+
+8)Sample commands to test MongoDB
+> use mydb - will create and take you to "mydb" database.
+> db.test.save({a:1}) - will create "test" container 
+	in "mydb" database and adds value of a:1.
+> db.test.find() - will show all the data in the "test" container.
+> exit - for exit from db server.
+> db.help() - any help required.
+
+Thanks
