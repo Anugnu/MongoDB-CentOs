@@ -26,14 +26,14 @@ The repolist command displays a list of enabled repositories:
 - yum repolist (use sudo if its not root)
 
 4)Now install MongoDB server into system.(use sudo if its not root)
-- yum install -y mongodb-org
+- yum install -y mongodb-org  (this installs latest version)
 incase if you are using fedora
 dnf install mongodb
 
 5)If you are using SElinux(secure edition), you have to edit its config
 - vi /etc/selinux/config , make it disabled 
 
-6)you can start mongodb directly (use sudo if its not root)
+6)you have to start mongodb database server first (use sudo if its not root)
 - systemctl start mongod
 - systemctl restart mongod for restart
 - systemctl stop mongod for stop
