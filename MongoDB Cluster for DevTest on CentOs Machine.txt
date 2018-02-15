@@ -1,0 +1,207 @@
+Note: Run every command from user only, not from root.
+
+Launch centOs machine, add a user with admin rights.
+
+(Do this steps in every machine)
+Firstly, Update required system files
+- sudo yum update -y
+
+Now add all the hostnames to all the server you want to include in this cluster.
+Press ESC button and then "i" for insert data.
+- sudo vi /etc/hosts
+It should look like
+192.168.50.xxx  mongoconfig1
+192.168.50.xxx  mongoconfig2
+192.168.50.xxx  mongoconfig3
+192.168.50.xxx  mongoqueryrouter
+192.168.50.xxx  mongoshard1
+192.168.50.xxx  mongoshard2
+
+
+Disable selinux (security)
+go to- sudo vi /etc/selinux/config
+change selinux=enforcing to selinux=disabled
+
+
+Disable Firewall (connection blocks)
+- sudo systemctl stop firewalld (not recommended) only for testing purpose.
+- open required ports (recommended)
+check status- sudo systemctl status firewalld
+
+
+Restart the machine (to changes takes place without over writing previous data)
+- reboot
+
+Note: Below steps are for all servers except query routers
+
+Install MongoDB
+1)Open VI editor
+- sudo vi /etc/yum.repos.d/mongodb-org-3.6.repo (use sudo if its not root)
+
+2)copy below details in vi editor.
+right click on screen to copy, make sure you copied it correctly.
+This is path for required repository.
+press ESC button and then "i" for insert data. 
+
+[mongodb-org-3.6]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.6/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-3.6.asc
+
+3)Now press ESC button and then ":", then "wq!" to copy and quit from editor.
+
+3)Before we move on, we should verify that the MongoDB repository exists within the yum utility.
+The repolist command displays a list of enabled repositories:
+- sudo yum repolist (use sudo if its not root)
+
+4)Now install MongoDB server into system.(use sudo if its not root)
+- sudo yum install -y mongodb-org
+
+
+Note: Don't run MongoDB, just install it. If you did start already, stop it.
+- Sudo systemctl stop mongod
+
+Now lets talk a bit about Mongo Cluster before we start work on it.
+Sharding is a method for distributing data across multiple machines.
+MongoDB supports horizontal scaling through sharding.
+
+Three components in Cluster:
+~query router- It is a query router which acts as interface for client and shard,
+	they can be more than one, but atleast one per application. We can scale them as required.
+~Config Server- stores metadata and config settings for cluster.
+	replica set of 3 is preferred and minimum of one. We replicate them.
+~Shard- Our actual database. We can scale and replicate them as per requirment.
+
+MongoDB shards at collection level.
+To distribute the documents in a collection, MongoDB partitions the collection using the shard key.
+A database can have a mixture of sharded and unsharded collections.
+Unsharded collections are stored on a primary shard.
+
+You choose the shard key when sharding a collection. The choice of shard key cannot be changed after sharding.
+A sharded collection can have only one shard key.
+MongoDB partitions sharded data into chunks.
+Each chunk has an inclusive lower and exclusive upper range based on the shard key.
+
+Two Types of Sharding:
+1)Range- evenly dividing data by their shard key ranges.
+	A range of shard keys whose values are “close” are more likely to reside on the same chunk.
+2)Hash- evenly dividing data by their shard key hash. hashing is done by itself.
+	And chances are database loads are evenly distrubuted.
+	While a range of shard keys may be “close”, their hashed values are unlikely to be on the same chunk.
+
+
+Config servers replication:
+Note: Only on the config servers and all config servers.
+
+Stop the mongod service, if you did start it.
+Go to mongod.conf and edit below details
+- sudo vi /etc/mongod.conf
+
+Before you edit:
+- 2 spaces must before new line in mongod.conf.
+- stop the mongod before doing any config changes.
+- camelCase style in mongod.conf file.
+- uncomment those sections, if commented, then edit.
+
+change ports
+  port: 27019			(port for config replica)
+  bindIp: 192.168.50.xxx	(your Ip)
+
+change replication
+replication:
+  replSetName: myconfigset1	(you name it)
+
+change sharding
+sharding:
+  clusterRole: configsvr	(default name)
+
+Save it and start mongod service.
+- sudo systemctl start mongod
+- sudo systemctl restart mongod	(if you already started before)
+
+Now connect to mongo shell from your host and specified port
+- mongo --host yourhostname --port 27019
+
+You have entered mongo shell, you will see a '>' where you can query you db.
+Now we have to initiate the replica set.
+Below 'id' is your configset name
+and host : thisisyourhostname.
+> rs.initiate(
+  {
+    _id: "myconfigset1",
+    configsvr: true,
+    members: [
+      { _id : 0, host : "mongoconfig1:27019" },
+      { _id : 1, host : "mongoconfig2:27019" },
+      { _id : 2, host : "mongoconfig3:27019" }
+    ]
+  }
+)
+
+You should probably see "ok : 1", if it worked.
+You can check it by this command.
+- rs.status()
+
+Any error occured, stop the mongod service, restart server, restart the mongod and run it.
+Hopefully it works.
+
+
+Sharding the servers:
+
+Stop the mongod service, if you did start it.
+Go to mongod.conf and edit below details
+- sudo vi /etc/mongod.conf
+
+change just bindIP only, not the port.
+net
+  bindIp: 192.168.50.xxx	(your Ip)
+
+Start the mongod service now
+- sudo systemctl start mongod	(If you haven't started yet).
+- sudo systemctl restart mongod	(If you already started before).
+
+
+Query Router setup:
+
+Create a user 'mongod', add user to 'mongod' group which is already exist.
+And add it to wheel group, which gives it sudo permissions. Do this commands from root
+- su root	(it prompts for password)
+- useradd username
+- passwd username		(it will prompt for password, enter it)
+- usermod -aG mongod mongod	(adding mongod user to mongod group)
+- usermod -aG wheel mongod	(adding mongod user to wheel group)
+- su mongod			(back to user)
+
+Setting up MongoDB from TarBall
+download mongodb zip file
+- sudo curl -O https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.6.2.tgz
+extract it to /opt
+- sudo tar -zxvf mongodb-linux-x86_64-3.6.2.tgz -C /opt
+rename or move it to /opt/mongod
+- sudo mv givepathofextractdonemineis/opt/mongodb-linux-x86_64-3.6.2/ /opt/mongod
+change mode and get permissions for that folder to our 'mongod' user
+- sudo chmod -R 777 /opt/mongod			(-R is recursive permission)
+- sudo chown -R mongod:mongod /opt/mongod	(owning for user 'mongod' and group 'mongod')
+create a directory data/db and own it to mongod
+- mkdir -p /data/db
+- sudo chmod -R 777 /data/db
+- sudo chown -R mongod:mongod /data/db
+go to bashrc and add the environment variables
+- vi .bashrc
+- export PATH=/yourpath/bin:$PATH (mine is export PATH=/opt/mongod/bin:$PATH)
+- printenv	(to check list of environmental variables).
+
+Adding Config Servers and Shards to Mongos
+adding config servers
+- mongos --configdb myconfigset1/mongoconfig1:27019,mongoconfig2:27019,mongoconfig3:27019 --bind_ip localhost,192.168.50.224
+now open another session of same queryrouter and add shards individually
+- sh.addShard( "shardhostname:27017")
+now check logs on every other server
+- sudo tail -f /var/log/mongodb/mongod.log
+to remove shard
+- db.adminCommand({removeShard:shardID})	(you can find it in sh.status)
+
+
+Testing
