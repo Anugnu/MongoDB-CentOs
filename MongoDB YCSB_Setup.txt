@@ -1,0 +1,102 @@
+﻿Update Your Machine
+sudo yum update -y
+
+Install Java/OpenJdkJava
+sudo yum install java-1.8.0-openjdk -y
+sudo yum install java-1.8.0-openjdk-devel -y
+java -version
+
+Install Maven
+sudo yum install maven -y
+mvn -version
+
+The above command should work, if not follow this process.
+-install wget or curl
+sudo yum install wget -y
+-change directory
+cd /usr/local
+sudo wget http://www-eu.apache.org/dist/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz
+-Extract Maven
+sudo tar xzf apache-maven-3.5.2-bin.tar.gz
+sudo ln -s apache-maven-3.5.2	maven
+-Set Environment Variable
+sudo vi /etc/profile.d/maven.sh
+-add in it
+export M2_HOME=/usr/local/maven
+export PATH=${M2_HOME}/bin:${PATH}
+-Check version
+mvn -version
+
+
+Download and extract YCSB
+wget https://github.com/brianfrankcooper/YCSB/releases/download/0.5.0/ycsb-0.5.0.tar.gz
+tar xfvz ycsb-0.5.0.tar.gz
+cd ycsb-0.5.0
+
+Things to Remember, before running the test:
+	Operation type (load/run)
+	Workload types (a,b,c,d,e,f)
+Example: workloads/workloada, workloads/workloadb
+	Datasets (size of the load we are running tests.) we usually take 32gb,64gb,128gb.
+Which can be calculate by 1M recordcount = ~1.5GB data. Data size multiplied by field length property, 10 million records with fieldlength=250 equals 25GB of data.
+	Recordcount (value for no. of records to load)
+Example: recordcount=1000000
+	Operationcount (value for no. of records to run)
+Example: operationcount=100000
+	Threads (no. of ycsb client threads/parallel operations)
+Example: -threads 2/4/8/16/32/64/128
+	hosts="" (If you are running from another server)
+hosts="192.168.50.xxx”
+	P file	Specify workload file
+	P	Override workload property
+usage: -p key=value
+	S	Print status to stderr
+usage: -s
+	Target: Target ops/sec (default: unthrottled)
+usage: -target number
+
+
+
+Running Default Workloads on Local Host
+./bin/ycsb load mongodb-async -s -P workloads/workloada > outputLoad.txt
+./bin/ycsb run mongodb-async -s -P workloads/workloada > outputRun.txt
+./bin/ycsb load mongodb -s -P workloads/workloada > outputLoad.txt
+./bin/ycsb run mongodb -s -P workloads/workloada > outputRun.txt
+
+Running Default Workloads on Remote Host
+./bin/ycsb load mongodb-async -p mongodb.url="mongodb://hostip1:27017,hostip2:27017" -s -P workloads/workloada > outputLoad.txt
+./bin/ycsb run mongodb-async -p mongodb.url="mongodb://hostip1:27017,hostip2:27017" -s -P workloads/workloada > outputRun.txt
+./bin/ycsb load mongodb -p mongodb.url="mongodb://hostip1:27017,hostip2:27017" -s -P workloads/workloada > outputLoad.txt
+./bin/ycsb run mongodb -p mongodb.url="mongodb://hostip1:27017,hostip2:27017" -s -P workloads/workloada > outputRun.txt
+
+Now Lets Run specific workload on Local Host
+./bin/ycsb load mongodb -s -P workloads/workloada -p recordcount=1000000 -threads 16 > outputLoadA.txt
+./bin/ycsb run mongodb -s -P workloads/workloada -p operationcount=1000000 -threads 2 > outputRunA.txt
+./bin/ycsb load mongodb -s -P workloads/workloadb -p recordcount=1000000 -threads 16 > outputLoadB.txt
+./bin/ycsb run mongodb -s -P workloads/workloadb -p operationcount=1000000 -threads 2 > outputRunB.txt
+./bin/ycsb load mongodb -s -P workloads/workloadc -p recordcount=1000000 -threads 16 > outputLoadC.txt
+./bin/ycsb run mongodb -s -P workloads/workloadc -p operationcount=1000000 -threads 2 > outputRunC.txt
+./bin/ycsb load mongodb -s -P workloads/workloadd -p recordcount=1000000 -threads 16 > outputLoadD.txt
+./bin/ycsb run mongodb -s -P workloads/workloadd -p operationcount=1000000 -threads 2 > outputRunD.txt
+./bin/ycsb load mongodb -s -P workloads/workloade -p recordcount=1000000 -threads 16 > outputLoadE.txt
+./bin/ycsb run mongodb -s -P workloads/workloade -p operationcount=1000000 -threads 2 > outputRunE.txt
+./bin/ycsb load mongodb -s -P workloads/workloadf -p recordcount=1000000 -threads 16 > outputLoadF.txt
+./bin/ycsb run mongodb -s -P workloads/workloadf -p operationcount=1000000 -threads 2 > outputRunF.txt
+
+Now Lets Run specific workload on Remote Host
+./bin/ycsb load mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloada -p recordcount=1000000 -threads 16 > outputLoadA.txt
+./bin/ycsb run mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloada -p operationcount=1000000 -threads 2 > outputRunA.txt
+./bin/ycsb load mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadb -p recordcount=1000000 -threads 16 > outputLoadB.txt
+./bin/ycsb run mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadb -p operationcount=1000000 -threads 2 > outputRunB.txt
+./bin/ycsb load mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadc -p recordcount=1000000 -threads 16 > outputLoadC.txt
+./bin/ycsb run mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadc -p operationcount=1000000 -threads 2 > outputRunC.txt
+./bin/ycsb load mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadd -p recordcount=1000000 -threads 16 > outputLoadD.txt
+./bin/ycsb run mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadd -p operationcount=1000000 -threads 2 > outputRunD.txt
+./bin/ycsb load mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloade -p recordcount=1000000 -threads 16 > outputLoadE.txt
+./bin/ycsb run mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloade -p operationcount=1000000 -threads 2 > outputRunE.txt
+./bin/ycsb load mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadf -p recordcount=1000000 -threads 16 > outputLoadF.txt
+./bin/ycsb run mongodb -p mongodb.url="mongodb://server.example.com:27017" -s -P workloads/workloadf -p operationcount=1000000 -threads 2 > outputRunF.txt
+
+
+Refer:	https://scalegrid.io/blog/how-to-benchmark-mongodb-with-ycsb/
+	https://github.com/brianfrankcooper/YCSB/wiki/Running-a-Workload
